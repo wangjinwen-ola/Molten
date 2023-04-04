@@ -274,7 +274,13 @@ void mo_chain_dtor(mo_chain_t *pct, mo_span_builder *psb, mo_stack *span_stack)
         if (pct->method == NULL) {
             psb->start_span(&span, (char *)pct->sapi, pct->pch.trace_id->val, span_id, parent_span_id,  pct->execute_begin_time, pct->execute_end_time, pct, AN_SERVER);
         } else {
-            psb->start_span(&span, (char *)pct->method, pct->pch.trace_id->val, span_id, parent_span_id,  pct->execute_begin_time, pct->execute_end_time, pct, AN_SERVER);
+            // psb->start_span(&span, (char *)pct->method, pct->pch.trace_id->val, span_id, parent_span_id,  pct->execute_begin_time, pct->execute_end_time, pct, AN_SERVER);
+             if (pct->request_uri != NULL) {
+                psb->start_span(&span, (char *)pct->request_uri, pct->pch.trace_id->val, span_id, parent_span_id,  pct->execute_begin_time, pct->execute_end_time, pct, AN_SERVER);
+             }else{
+                psb->start_span(&span, (char *)pct->method, pct->pch.trace_id->val, span_id, parent_span_id,  pct->execute_begin_time, pct->execute_end_time, pct, AN_SERVER);
+             }
+            psb->span_add_ba_ex(span, "http.method",  (char *)pct->method, pct->execute_begin_time, pct, BA_NORMAL);
         }
 
         /* add request uri */
@@ -294,6 +300,7 @@ void mo_chain_dtor(mo_chain_t *pct, mo_span_builder *psb, mo_stack *span_stack)
                 memset(url, 0x00, url_len);
                 snprintf(url, url_len, "http://%s%s", Z_STRVAL_P(http_host), Z_STRVAL_P(request_uri));
                 psb->span_add_ba_ex(span, "http.url", url, pct->execute_begin_time, pct, BA_NORMAL);
+                psb->span_add_ba_ex(span, "http.request_uri", pct->request_uri, pct->execute_begin_time, pct, BA_NORMAL);
                 efree(url);
             }
         }
